@@ -512,11 +512,11 @@
                 const el = document.createElement('div');
                 el.className = 'marker';
                 el.style.backgroundColor = 'red';
-                el.style.width = '10px';
-                el.style.height = '10px';
+                el.style.width = '25px';
+                el.style.height = '25px';
                 el.style.borderRadius = '50%';
 
-                new maplibregl.Marker(el)
+                new maplibregl.Marker({element: el, opacity: 0.2})
                     .setLngLat([poi.lon, poi.lat])
                     .addTo(map)
                     .getElement().addEventListener('click', () => showPOITags(poi));
