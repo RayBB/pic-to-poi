@@ -439,7 +439,7 @@
         async function moveToUserLocation() {
             try {
                 const userLocation = await getUserLocation();
-                map.flyTo({ center: userLocation, zoom: 15 });
+                map.flyTo({ center: userLocation, zoom: 18 });
 
                 // Remove existing user location marker if it exists
                 if (userLocationMarker) {
