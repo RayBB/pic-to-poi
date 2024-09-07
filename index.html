@@ -32,6 +32,7 @@
             overflow-y: auto;
             transform: translateX(100%);
             transition: transform 0.3s ease-in-out;
+            padding: 0.5rem; /* Reduced padding */
         }
 
         #poi-sidebar.active {
@@ -46,6 +47,11 @@
             border: 2px solid white;
             box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
             cursor: pointer;
+        }
+
+        #poi-tags table {
+            border-collapse: separate;
+            border-spacing: 0 0.25rem; /* Adds a small gap between rows */
         }
     </style>
     <script type="importmap">
@@ -568,12 +574,20 @@
             tagsContainer.appendChild(buttonContainer);
 
             // Display tags
+            const tagsTable = document.createElement('table');
+            tagsTable.className = 'w-full text-sm'; // Smaller font for tags
+
             for (const [key, value] of Object.entries(poi.tags)) {
-                const tagElement = document.createElement('div');
-                tagElement.className = 'mb-2';
-                tagElement.innerHTML = `<strong>${key}:</strong> ${value}`;
-                tagsContainer.appendChild(tagElement);
+                const row = tagsTable.insertRow();
+                const keyCell = row.insertCell(0);
+                const valueCell = row.insertCell(1);
+                keyCell.className = 'font-semibold pr-2 align-top'; // Right padding for key, align to top
+                keyCell.textContent = key;
+                valueCell.className = 'break-words'; // Allow long values to wrap
+                valueCell.textContent = value;
             }
+
+            tagsContainer.appendChild(tagsTable);
 
             sidebar.classList.add('active');
         }
