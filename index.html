@@ -147,6 +147,8 @@
             
             if (apiKeyFromURL) {
                 localStorage.setItem('gemini_api_key', apiKeyFromURL);
+                // Remove the API key from the URL
+                window.history.replaceState({}, document.title, window.location.pathname);
                 return apiKeyFromURL;
             }
             
