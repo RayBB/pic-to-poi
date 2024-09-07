@@ -98,6 +98,21 @@
                     </div>
                     <div id="center-coordinates" class="mt-2 text-sm text-gray-600"></div>
                 </div>
+
+                <!-- New section for selected POI -->
+                <div id="selected-poi" class="mb-8 hidden">
+                    <h2 class="text-2xl font-semibold mb-4">Selected POI:</h2>
+                    <div class="flex gap-2 mb-4">
+                        <a id="edit-poi-link" href="#" target="_blank" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                            Edit in iD
+                        </a>
+                        <button id="copy-poi-tags" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                            Copy Tags
+                        </button>
+                    </div>
+                    <div id="poi-tags" class="text-sm"></div>
+                </div>
+
                 <div id="image-container" class="hidden relative">
                     <h2 class="text-2xl font-semibold mb-4">Selected Image:</h2>
                     <div class="relative inline-block">
@@ -137,10 +152,6 @@
                 </div>
             </div>
         </div>
-    </div>
-    <div id="poi-sidebar" class="p-4">
-        <h3 class="text-xl font-bold mb-2">POI Tags</h3>
-        <div id="poi-tags"></div>
     </div>
 
     <script type="module">
@@ -548,48 +559,35 @@
         }
 
         function showPOITags(poi) {
-            const sidebar = document.getElementById('poi-sidebar');
+            const selectedPOI = document.getElementById('selected-poi');
             const tagsContainer = document.getElementById('poi-tags');
+            const editLink = document.getElementById('edit-poi-link');
+            const copyButton = document.getElementById('copy-poi-tags');
+
+            selectedPOI.classList.remove('hidden');
             tagsContainer.innerHTML = '';
 
-            // Create a container for the buttons
-            const buttonContainer = document.createElement('div');
-            buttonContainer.className = 'flex gap-2 mb-4';
-
-            // Add edit link
-            const editLink = document.createElement('a');
+            // Update edit link
             editLink.href = `https://www.openstreetmap.org/edit?${poi.type}=${poi.id}`;
-            editLink.target = '_blank';
-            editLink.className = 'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded';
-            editLink.textContent = 'Edit in iD';
-            buttonContainer.appendChild(editLink);
 
-            // Add copy tags button
-            const copyButton = document.createElement('button');
-            copyButton.className = 'bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded';
-            copyButton.textContent = 'Copy Tags';
-            copyButton.addEventListener('click', () => copyPOITags(poi.tags));
-            buttonContainer.appendChild(copyButton);
-
-            tagsContainer.appendChild(buttonContainer);
+            // Update copy button
+            copyButton.onclick = () => copyPOITags(poi.tags);
 
             // Display tags
             const tagsTable = document.createElement('table');
-            tagsTable.className = 'w-full text-sm'; // Smaller font for tags
+            tagsTable.className = 'w-full';
 
             for (const [key, value] of Object.entries(poi.tags)) {
                 const row = tagsTable.insertRow();
                 const keyCell = row.insertCell(0);
                 const valueCell = row.insertCell(1);
-                keyCell.className = 'font-semibold pr-2 align-top'; // Right padding for key, align to top
+                keyCell.className = 'font-semibold pr-2 align-top';
                 keyCell.textContent = key;
-                valueCell.className = 'break-words'; // Allow long values to wrap
+                valueCell.className = 'break-words';
                 valueCell.textContent = value;
             }
 
             tagsContainer.appendChild(tagsTable);
-
-            sidebar.classList.add('active');
         }
 
         function copyPOITags(tags) {
