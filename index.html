@@ -99,10 +99,10 @@
                     <div id="center-coordinates" class="mt-2 text-sm text-gray-600"></div>
                 </div>
 
-                <!-- New section for selected POI -->
+                <!-- New section for selected/new POI -->
                 <div id="selected-poi" class="mb-8 hidden">
-                    <h2 class="text-2xl font-semibold mb-4">Selected POI:</h2>
-                    <div class="flex gap-2 mb-4">
+                    <h2 id="poi-title" class="text-2xl font-semibold mb-4">Selected POI:</h2>
+                    <div id="poi-actions" class="flex gap-2 mb-4">
                         <a id="edit-poi-link" href="#" target="_blank" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                             Edit in iD
                         </a>
@@ -488,6 +488,7 @@
                 centerIcon = null;
                 centerCoordinatesDisplay.textContent = '';
                 map.off('move', updateCenterIconPosition);
+                hideSelectedPOI();
             } else {
                 // If the center icon doesn't exist, create and add it
                 const centerIconElement = document.createElement('div');
@@ -503,7 +504,7 @@
                 // Update the icon's position when the map moves
                 map.on('move', updateCenterIconPosition);
 
-                updateCenterCoordinates();
+                showNewPOI();
             }
         }
 
@@ -519,8 +520,25 @@
                 const center = map.getCenter();
                 const lat = center.lat.toFixed(6);
                 const lng = center.lng.toFixed(6);
-                centerCoordinatesDisplay.textContent = `Center: ${lat}, ${lng}`;
+                showNewPOI(lat, lng);
             }
+        }
+
+        function showNewPOI(lat, lng) {
+            const selectedPOI = document.getElementById('selected-poi');
+            const poiTitle = document.getElementById('poi-title');
+            const poiActions = document.getElementById('poi-actions');
+            const poiTags = document.getElementById('poi-tags');
+
+            selectedPOI.classList.remove('hidden');
+            poiTitle.textContent = 'New POI';
+            poiActions.classList.add('hidden');
+            poiTags.innerHTML = `<p>Coordinates: ${lat}, ${lng}</p>`;
+        }
+
+        function hideSelectedPOI() {
+            const selectedPOI = document.getElementById('selected-poi');
+            selectedPOI.classList.add('hidden');
         }
 
         // Add this function to display POIs
@@ -560,11 +578,15 @@
 
         function showPOITags(poi) {
             const selectedPOI = document.getElementById('selected-poi');
+            const poiTitle = document.getElementById('poi-title');
+            const poiActions = document.getElementById('poi-actions');
             const tagsContainer = document.getElementById('poi-tags');
             const editLink = document.getElementById('edit-poi-link');
             const copyButton = document.getElementById('copy-poi-tags');
 
             selectedPOI.classList.remove('hidden');
+            poiTitle.textContent = 'Selected POI';
+            poiActions.classList.remove('hidden');
             tagsContainer.innerHTML = '';
 
             // Update edit link
@@ -622,14 +644,6 @@
                 }, 300);
             }, 3000);
         }
-
-        // Add event listener to close sidebar when clicking outside
-        document.addEventListener('click', (e) => {
-            const sidebar = document.getElementById('poi-sidebar');
-            if (!sidebar.contains(e.target) && !e.target.closest('.marker')) {
-                sidebar.classList.remove('active');
-            }
-        });
 
         function convertDMSToDD(dms, ref) {
             const degrees = dms[0];
