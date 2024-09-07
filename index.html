@@ -422,7 +422,6 @@
                 map.on('moveend', () => {
                     const center = map.getCenter();
                     saveLastLocation([center.lng, center.lat]);
-                    updateCenterCoordinates();
                 });
 
                 centerCoordinatesDisplay = document.getElementById('center-coordinates');
@@ -486,7 +485,6 @@
                 // If the center icon exists, remove it and reset
                 centerIcon.remove();
                 centerIcon = null;
-                centerCoordinatesDisplay.textContent = '';
                 map.off('move', updateCenterIconPosition);
                 hideSelectedPOI();
             } else {
@@ -494,33 +492,27 @@
                 const centerIconElement = document.createElement('div');
                 centerIconElement.className = 'center-icon';
 
+                const center = map.getCenter();
                 centerIcon = new maplibregl.Marker({
                     element: centerIconElement,
                     anchor: 'center'
                 })
-                    .setLngLat(map.getCenter())
+                    .setLngLat(center)
                     .addTo(map);
 
                 // Update the icon's position when the map moves
                 map.on('move', updateCenterIconPosition);
 
-                showNewPOI();
+                // Pass the current center coordinates to showNewPOI
+                showNewPOI(center.lat.toFixed(6), center.lng.toFixed(6));
             }
         }
 
         function updateCenterIconPosition() {
             if (centerIcon) {
-                centerIcon.setLngLat(map.getCenter());
-                updateCenterCoordinates();
-            }
-        }
-
-        function updateCenterCoordinates() {
-            if (centerIcon) {
                 const center = map.getCenter();
-                const lat = center.lat.toFixed(6);
-                const lng = center.lng.toFixed(6);
-                showNewPOI(lat, lng);
+                centerIcon.setLngLat(center);
+                showNewPOI(center.lat.toFixed(6), center.lng.toFixed(6));
             }
         }
 
