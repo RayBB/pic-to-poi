@@ -61,6 +61,7 @@
         }
     }
     </script>
+    <script src="https://unpkg.com/osm-api@2"></script>
 </head>
 
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
@@ -70,7 +71,7 @@
             class="border-4 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 transition-colors mb-8">
             <p class="text-gray-600">Drag and drop your images here, or click to select files (max 20)</p>
             <!-- Note, we must accept */* otherwise GPS data is stripped from the exif on mobile -->
-            <input type="file" id="fileInput" class="hidden" multiple  accept="*/*">
+            <input type="file" id="fileInput" class="hidden" multiple accept="*/*">
         </div>
         <div id="image-list" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 hidden"></div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -103,10 +104,12 @@
                 <div id="selected-poi" class="mb-8 hidden">
                     <h2 id="poi-title" class="text-2xl font-semibold mb-4">Selected POI:</h2>
                     <div id="poi-actions" class="flex gap-2 mb-4">
-                        <a id="edit-poi-link" href="#" target="_blank" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                        <a id="edit-poi-link" href="#" target="_blank"
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                             Edit in iD
                         </a>
-                        <button id="copy-poi-tags" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                        <button id="copy-poi-tags"
+                            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
                             Copy Tags
                         </button>
                     </div>
@@ -152,6 +155,16 @@
                 </div>
             </div>
         </div>
+
+        <!-- Add login/logout buttons at the bottom -->
+        <div class="flex justify-center mt-8">
+            <button id="login-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2 hidden">
+                Login to OSM
+            </button>
+            <button id="logout-button" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded hidden">
+                Logout
+            </button>
+        </div>
     </div>
 
     <script type="module">
@@ -162,14 +175,14 @@
         function getAPIKey() {
             const urlParams = new URLSearchParams(window.location.search);
             const apiKeyFromURL = urlParams.get('gemini_api_key');
-            
+
             if (apiKeyFromURL) {
                 localStorage.setItem('gemini_api_key', apiKeyFromURL);
                 // Remove the API key from the URL
                 window.history.replaceState({}, document.title, window.location.pathname);
                 return apiKeyFromURL;
             }
-            
+
             return localStorage.getItem('gemini_api_key');
         }
 
@@ -543,7 +556,7 @@
                 el.style.height = '25px';
                 el.style.borderRadius = '50%';
 
-                new maplibregl.Marker({element: el, opacity: 0.2})
+                new maplibregl.Marker({ element: el, opacity: 0.2 })
                     .setLngLat([poi.lon, poi.lat])
                     .addTo(map)
                     .getElement().addEventListener('click', () => showPOITags(poi));
@@ -697,7 +710,7 @@
             const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
             const imageParts = [];
-            
+
             // Iterate through all uploaded images
             for (const imageData of uploadedImages) {
                 const [mimeType, base64Data] = imageData.src.split(',');
@@ -805,6 +818,60 @@
         window.addEventListener('load', () => {
             displayMap();
         });
+    </script>
+    <script>
+        // OSM login, to move to another file
+        if (window.opener) {
+            window.opener.authComplete(location.href);
+            updateAuthButtons();
+            window.close();
+        }
+        OSM.configure({ apiUrl: "https://master.apis.dev.openstreetmap.org" })
+        function handleLogin() {
+            OSM.login({
+                mode: "popup",
+                clientId: "dcpOB8ZTXOQXog_iqNyH3B9VTeD_7NMKT-use2LQ1IQ",
+                redirectUrl: window.location.protocol + "//" + window.location.host + "/index.html",
+                scopes: ["write_api"]
+            })
+        }
+
+        // Add these new functions for handling login/logout
+        function updateAuthButtons() {
+            const loginButton = document.getElementById('login-button');
+            const logoutButton = document.getElementById('logout-button');
+
+            if (OSM.isLoggedIn()) {
+                loginButton.classList.add('hidden');
+                logoutButton.classList.remove('hidden');
+            } else {
+                loginButton.classList.remove('hidden');
+                logoutButton.classList.add('hidden');
+            }
+        }
+
+
+        function handleLogout() {
+            OSM.logout().then(() => {
+                updateAuthButtons();
+                showToast('Logged out successfully');
+            }).catch(error => {
+                console.error('Logout error:', error);
+                showToast('Error logging out', 'error');
+            });
+        }
+
+        // Add event listeners for login and logout buttons
+        document.getElementById('login-button').addEventListener('click', handleLogin);
+        document.getElementById('logout-button').addEventListener('click', handleLogout);
+
+        // Update auth buttons on page load
+        window.addEventListener('load', () => {
+            updateAuthButtons();
+        });
+
+        // Check login status periodically
+        setInterval(updateAuthButtons, 1000);
     </script>
 </body>
 
