@@ -399,7 +399,8 @@
             mapContainer.classList.remove('hidden');
 
             let center = getLastLocation() || MADISON_SQ_GARDEN;
-            if (exifData && exifData.GPSLatitude && exifData.GPSLongitude) {
+            const photoHasLocation = exifData && exifData.GPSLatitude && exifData.GPSLongitude;
+            if (photoHasLocation) {
                 const lat = convertDMSToDD(exifData.GPSLatitude, exifData.GPSLatitudeRef);
                 const lon = convertDMSToDD(exifData.GPSLongitude, exifData.GPSLongitudeRef);
                 center = [lon, lat];
@@ -448,16 +449,18 @@
                 map.setCenter(center);
             }
 
-            // Clear existing markers
-            const markers = document.getElementsByClassName('maplibregl-marker');
-            while (markers[0]) {
-                markers[0].parentNode.removeChild(markers[0]);
-            }
+            // Add marker for the photo
+            if (photoHasLocation) {
+                // TODO: later let you over to see the photo
+                const cameraIcon = document.createElement('img');
+                cameraIcon.src = 'icons/camera-svgrepo-com.svg';
+                cameraIcon.style.width = '50px';
+                cameraIcon.style.height = '50px';
 
-            // Add marker for the current location
-            new maplibregl.Marker()
-                .setLngLat(center)
-                .addTo(map);
+                new maplibregl.Marker({ element: cameraIcon })
+                    .setLngLat(center)
+                    .addTo(map);
+            }
 
             // Fetch and display POIs
             // console.log(map.getCenter(), "GPSLatitude")
