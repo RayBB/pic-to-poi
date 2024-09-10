@@ -517,7 +517,74 @@
             selectedPOI.classList.remove('hidden');
             poiTitle.textContent = 'New POI';
             poiActions.classList.add('hidden');
-            poiTags.innerHTML = `<p>Coordinates: ${lat}, ${lng}</p>`;
+            poiTags.innerHTML = `
+                <p>Coordinates: ${lat}, ${lng}</p>
+                <button id="upload-new-poi" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-2">
+                    Upload New POI
+                </button>
+            `;
+
+            // Add event listener for the new upload button
+            document.getElementById('upload-new-poi').addEventListener('click', () => uploadNewPOI(lat, lng));
+        }
+
+
+        async function uploadChangeset(changesetData, comment) {
+            const changeset = await OSM.uploadChangeset(
+                {
+                    created_by: "pic-to-poi",
+                    comment: comment,
+                },
+                changesetData
+            );
+            console.log(changeset);
+            return changeset;
+        }
+
+        async function uploadNewNode(tags, lat, lon) {
+            const newNode = {
+                type: "node",
+                id: -1, // Negative ID for new nodes
+                lat: lat,
+                lon: lon,
+                tags: tags
+            };
+            return uploadChangeset({
+                create: [newNode],
+                modify: [],
+                delete: [],
+            }, "creating a new node");
+        }
+
+        async function updateExistingFeature(type, id, tags) {
+            const featureResponse = await OSM.getFeature(type, id);
+            if (featureResponse.length > 0) {
+                const feature = featureResponse[0];
+                feature.tags = tags;
+                return uploadChangeset({
+                    create: [],
+                    modify: [feature],
+                    delete: [],
+                }, "updating a feature");
+            }
+        }
+
+
+        // Add this new function
+        async function uploadNewPOI(lat, lng) {
+            const tagsTextarea = document.getElementById('tags-textarea');
+            const tags = tagsTextarea.value.split('\n').reduce((acc, tag) => {
+                const [key, value] = tag.split('=');
+                if (key && value) {
+                    acc[key.trim()] = value.trim();
+                }
+                return acc;
+            }, {});
+
+
+            console.log('New POI data:', lat, lng, tags);
+            await uploadNewNode(tags, lat, lng);
+            showToast('POI uploaded successfully!');
         }
 
         function hideSelectedPOI() {
