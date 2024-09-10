@@ -102,7 +102,7 @@
             </div>
 
             <div id="image-container" class="hidden relative">
-                <h2 class="text-2xl font-semibold mb-4">Selected Image:</h2>
+                <h2 class="text-2xl font-semibold mb-4">Selected Image</h2>
                 <div class="relative inline-block">
                     <img id="selected-image" class="max-w-full h-auto rounded-lg" alt="Selected image">
                     <div class="magnifier"></div>
@@ -253,6 +253,9 @@
             if (uploadedImages.length > 0) {
                 selectImage(0);
                 document.getElementById('tags-container').classList.remove('hidden');
+                
+                // Scroll the image container into view
+                document.getElementById('image-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
             } else {
                 document.getElementById('tags-container').classList.add('hidden');
             }
