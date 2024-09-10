@@ -525,6 +525,17 @@
             }
         }
 
+        function getTagsFromTextarea() {
+            const tagsTextarea = document.getElementById('tags-textarea');
+            return tagsTextarea.value.split('\n').reduce((acc, tag) => {
+                const [key, value] = tag.split('=');
+                if (key) {
+                    acc[key.trim()] = value ? value.trim() : '';
+                }
+                return acc;
+            }, {});
+        }
+        
         function showNewPOI(lat, lng) {
             const selectedPOI = document.getElementById('selected-poi');
             const poiTitle = document.getElementById('poi-title');
@@ -535,66 +546,9 @@
             poiTitle.textContent = 'New POI';
             poiActions.classList.add('hidden');
             poiTags.innerHTML = `<p>Coordinates: ${lat}, ${lng}</p>`;
-            window.currentPOITagsString = '';
-        }
-
-
-        async function uploadChangeset(changesetData, comment) {
-            const changeset = await OSM.uploadChangeset(
-                {
-                    created_by: "pic-to-poi",
-                    comment: comment,
-                },
-                changesetData
-            );
-            console.log(changeset);
-            return changeset;
-        }
-
-        async function uploadNewNode(tags, lat, lon) {
-            const newNode = {
-                type: "node",
-                id: -1, // Negative ID for new nodes
-                lat: lat,
-                lon: lon,
-                tags: tags
-            };
-            return uploadChangeset({
-                create: [newNode],
-                modify: [],
-                delete: [],
-            }, "creating a new node");
-        }
-
-        async function updateExistingFeature(type, id, tags) {
-            const featureResponse = await OSM.getFeature(type, id);
-            if (featureResponse.length > 0) {
-                const feature = featureResponse[0];
-                feature.tags = tags;
-                return uploadChangeset({
-                    create: [],
-                    modify: [feature],
-                    delete: [],
-                }, "updating a feature");
-            }
-        }
-
-
-        // Add this new function
-        async function uploadNewPOI(lat, lng) {
-            const tagsTextarea = document.getElementById('tags-textarea');
-            const tags = tagsTextarea.value.split('\n').reduce((acc, tag) => {
-                const [key, value] = tag.split('=');
-                if (key && value) {
-                    acc[key.trim()] = value.trim();
-                }
-                return acc;
-            }, {});
-
-
-            console.log('New POI data:', lat, lng, tags);
-            await uploadNewNode(tags, lat, lng);
-            showToast('POI uploaded successfully!');
+            window.currentPOIObject = null;
+            const center = map.getCenter();
+            window.centerIconPosition = { lat: center.lat, lng: center.lng };
         }
 
         function hideSelectedPOI() {
@@ -632,7 +586,7 @@
                 el.style.height = '25px';
                 el.style.borderRadius = '50%';
                 if (!poi.lon || !poi.lat) {
-                    console.log("Skipping POI with no coordinates:", poi);
+                    //console.log("Skipping POI with no coordinates:", poi);
                     return;
                 }
 
@@ -703,7 +657,8 @@
                 .join('\n');
 
             // Add current POI tags to a global variable for later use
-            window.currentPOITagsString = tagsString;
+            window.currentPOIObject = poi;
+            window.centerIconPosition = null;
         }
 
         function copyPOITags(tags) {
@@ -858,8 +813,12 @@
             };
 
             try {
+                const tagsString = Object.entries(window.currentPOIObject.tags)
+                .map(([key, value]) => `${key}=${value}`)
+                .join('\n');
+
                 const result = await model.generateContent({
-                    contents: [{ role: "user", parts: [{ text: generateTagsPrompt(window.currentPOITagsString) }, ...imageParts] }],
+                    contents: [{ role: "user", parts: [{ text: generateTagsPrompt(tagsString) }, ...imageParts] }],
                     generationConfig: generationConfig,
                 });
 
@@ -945,6 +904,44 @@
         window.addEventListener('load', () => {
             displayMap();
         });
+
+        async function uploadNewPOI(lat, lng) {
+            const tags = getTagsFromTextarea();
+            console.log('New POI data:', lat, lng, tags);
+            await uploadNewNode(tags, lat, lng);
+            showToast('POI uploaded successfully!');
+        }
+
+        async function handleSubmitChanges() {
+            console.log("handleSubmitChanges");
+            if (!OSM.isLoggedIn()) {
+                showToast("Please log in to submit changes", "error");
+                return;
+            }
+            if (!window.currentPOIObject && !window.centerIconPosition) {
+                console.log(window.currentPOIObject, window.centerIconPosition);
+                showToast("Please select a POI or GPS location first", "error");
+                return;
+            }
+            const blankTagsTextarea = document.getElementById('tags-textarea').value == '';
+            if (blankTagsTextarea) {
+                showToast("Please calculate tags", "error");
+                return;
+            }
+            if (window.centerIconPosition) {
+                await uploadNewPOI(window.centerIconPosition.lat, window.centerIconPosition.lng);
+            } else 
+            if (window.currentPOIObject) {
+                const type = window.currentPOIObject.type;
+                const id = window.currentPOIObject.id;
+                const tags = getTagsFromTextarea();
+                await updateExistingFeature(type, id, tags);
+            }
+        }
+        document.getElementById('submit-poi-button').addEventListener('click', handleSubmitChanges);
+
+        
+
     </script>
     <script>
         // OSM login, to move to another file
@@ -953,11 +950,11 @@
             updateAuthButtons();
             window.close();
         }
-        OSM.configure({ apiUrl: "https://master.apis.dev.openstreetmap.org" })
+        // OSM.configure({ apiUrl: "https://master.apis.dev.openstreetmap.org" })
         function handleLogin() {
             OSM.login({
                 mode: "popup",
-                clientId: "dcpOB8ZTXOQXog_iqNyH3B9VTeD_7NMKT-use2LQ1IQ",
+                clientId: "clglGFX6TSr44TGQ9jsQBhVQfzCH2XEZ02vq9GtyGhA", // "dcpOB8ZTXOQXog_iqNyH3B9VTeD_7NMKT-use2LQ1IQ", // this is the test client id
                 redirectUrl: window.location.protocol + "//" + window.location.host + "/index.html",
                 scopes: ["write_api"]
             })
@@ -990,15 +987,18 @@
 
 
         async function uploadChangeset(changesetData, comment) {
-            const changeset = await OSM.uploadChangeset(
-                {
-                    created_by: "pic-to-poi",
-                    comment: comment,
-                },
-                changesetData
-            );
-            console.log(changeset);
-            return changeset;
+            console.log("uploadChangeset", changesetData, comment);
+            // TODO: for now lets not upload to OSM
+
+            // const changeset = await OSM.uploadChangeset(
+            //     {
+            //         created_by: "pic-to-poi",
+            //         comment: comment,
+            //     },
+            //     changesetData
+            // );
+            // console.log(changeset);
+            // return changeset;
         }
 
         async function uploadNewNode(tags, lat, lon) {
