@@ -32,7 +32,8 @@
             overflow-y: auto;
             transform: translateX(100%);
             transition: transform 0.3s ease-in-out;
-            padding: 0.5rem; /* Reduced padding */
+            padding: 0.5rem;
+            /* Reduced padding */
         }
 
         #poi-sidebar.active {
@@ -51,9 +52,11 @@
 
         #poi-tags table {
             border-collapse: separate;
-            border-spacing: 0 0.25rem; /* Adds a small gap between rows */
+            border-spacing: 0 0.25rem;
+            /* Adds a small gap between rows */
         }
-        .maplibregl-user-location-accuracy-circle{
+
+        .maplibregl-user-location-accuracy-circle {
             /* This is needed so accuracy circle doesn't interfere with marker clicks */
             pointer-events: none;
         }
@@ -153,10 +156,12 @@
 
         <!-- Add login/logout buttons at the bottom -->
         <div class="flex justify-center mt-8">
-            <button id="login-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2 hidden">
+            <button id="login-button"
+                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2 hidden">
                 Login to OSM
             </button>
-            <button id="logout-button" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded hidden">
+            <button id="logout-button"
+                class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded hidden">
                 Logout
             </button>
         </div>
@@ -370,9 +375,9 @@
         }
 
         let map; // Declare map variable at a higher scope
-        let userLocationMarker;
         let centerIcon;
         let centerCoordinatesDisplay;
+        const poiMapMarkers = [];
 
         const MADISON_SQ_GARDEN = [-73.9934, 40.7505]; // Longitude, Latitude
 
@@ -409,17 +414,22 @@
                 if (window.innerWidth > 768) {
                     map.addControl(new maplibregl.NavigationControl());
                 }
-                map.addControl(
-                    new maplibregl.GeolocateControl({
-                        positionOptions: {
-                            enableHighAccuracy: true
-                        },
-                        trackUserLocation: true,
-                        fitBoundsOptions: {
-                            maxZoom: 18
-                        }
-                    })
-                );
+
+                const geolocate = new maplibregl.GeolocateControl({
+                    positionOptions: {
+                        enableHighAccuracy: true
+                    },
+                    trackUserLocation: true,
+                    fitBoundsOptions: {
+                        maxZoom: 18
+                    }
+                })
+                map.addControl(geolocate);
+
+                map.on('moveend', () => {
+                    // update the pois when the map moves
+                    fetchAndDisplayPOIs();
+                });
 
 
                 // Add center icon button functionality
@@ -448,8 +458,9 @@
                 .addTo(map);
 
             // Fetch and display POIs
-            const pois = await fetchPOIs(center[1], center[0]);
-            displayPOIs(pois);
+            // console.log(map.getCenter(), "GPSLatitude")
+
+            fetchAndDisplayPOIs();
 
             // Save the current location
             saveLastLocation(center);
@@ -580,8 +591,28 @@
             selectedPOI.classList.add('hidden');
         }
 
+        let lastFetchCenter = null;
+        const FETCH_THRESHOLD = 100; // meters
+
+        async function fetchAndDisplayPOIs() {
+            const center = map.getCenter();
+
+            if (lastFetchCenter && center.distanceTo(lastFetchCenter) < FETCH_THRESHOLD) {
+                console.log("Center hasn't moved enough. Skipping fetch.");
+                return;
+            }
+
+            const pois = await fetchPOIs(center.lat, center.lng);
+            displayPOIs(pois);
+
+            lastFetchCenter = center;
+        }
+
         // Add this function to display POIs
         function displayPOIs(pois) {
+            // remove old markers
+            poiMapMarkers.forEach(m => m.remove());
+
             pois.forEach(poi => {
                 const el = document.createElement('div');
                 el.className = 'marker';
@@ -589,11 +620,16 @@
                 el.style.width = '25px';
                 el.style.height = '25px';
                 el.style.borderRadius = '50%';
+                if (!poi.lon || !poi.lat) {
+                    console.log("Skipping POI with no coordinates:", poi);
+                    return;
+                }
 
-                new maplibregl.Marker({ element: el, opacity: 0.2 })
-                    .setLngLat([poi.lon, poi.lat])
+                const m = new maplibregl.Marker({ element: el, opacity: 0.2 });
+                m.setLngLat([poi.lon, poi.lat])
                     .addTo(map)
                     .getElement().addEventListener('click', () => showPOITags(poi));
+                poiMapMarkers.push(m);
             });
         }
 
