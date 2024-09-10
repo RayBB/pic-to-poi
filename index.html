@@ -121,6 +121,21 @@
                     <textarea id="tags-textarea"
                         class="w-full h-40 p-2 border rounded resize-none font-mono mb-4"></textarea>
                     <div id="reasoning" class="text-sm text-gray-600"></div>
+                    
+                    <!-- New section for tag usage -->
+                    <div id="tag-usage" class="mt-4">
+                        <h3 class="text-xl font-semibold mb-2">Tag Usage</h3>
+                        <table id="tag-usage-table" class="w-full border-collapse">
+                            <thead>
+                                <tr>
+                                    <th class="border p-2">Tag</th>
+                                    <th class="border p-2">Key Usage</th>
+                                    <th class="border p-2">Value Usage</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
                 </div>
                 <div id="exif-data" class="collapsible-section hidden">
                     <h2 class="text-2xl font-semibold mb-4 cursor-pointer flex items-center"
@@ -152,6 +167,7 @@
     <script type="module">
         import { GoogleGenerativeAI } from "@google/generative-ai";
         import { generateTagsPrompt } from './prompt.js';
+        import { getKeyUsage, getTagUsage } from './taginfo.js';
 
         // Function to get API key from URL or local storage
         function getAPIKey() {
@@ -858,8 +874,47 @@
             }
         }
 
-        function displayTags(tags) {
+        async function displayTags(tags) {
             tagsTextarea.value = tags.join('\n');
+            
+            // Display tag usage
+            const tagUsageTable = document.getElementById('tag-usage-table').getElementsByTagName('tbody')[0];
+            tagUsageTable.innerHTML = ''; // Clear existing rows
+
+            for (const tag of tags) {
+                const [key, value] = tag.split('=');
+                const row = tagUsageTable.insertRow();
+                const tagCell = row.insertCell(0);
+                const keyUsageCell = row.insertCell(1);
+                const valueUsageCell = row.insertCell(2);
+
+                // Create links for key and value
+                const keyLink = `https://taginfo.openstreetmap.org/keys/${encodeURIComponent(key)}`;
+                const valueLink = value ? `https://taginfo.openstreetmap.org/tags/${encodeURIComponent(key)}=${encodeURIComponent(value)}` : null;
+
+                tagCell.innerHTML = `
+                    <a href="${keyLink}" target="_blank" class="text-blue-500 hover:underline">${key}</a>
+                    ${value ? `=<a href="${valueLink}" target="_blank" class="text-blue-500 hover:underline">${value}</a>` : ''}
+                `;
+                keyUsageCell.textContent = 'Loading...';
+                valueUsageCell.textContent = 'Loading...';
+
+                try {
+                    const keyUsage = await getKeyUsage(key);
+                    keyUsageCell.textContent = keyUsage.toLocaleString();
+
+                    if (value) {
+                        const tagUsage = await getTagUsage(key, value);
+                        valueUsageCell.textContent = tagUsage.toLocaleString();
+                    } else {
+                        valueUsageCell.textContent = 'N/A';
+                    }
+                } catch (error) {
+                    console.error(`Error fetching usage for ${tag}:`, error);
+                    keyUsageCell.textContent = 'Error';
+                    valueUsageCell.textContent = 'Error';
+                }
+            }
         }
 
         function displayReasoning(reasoning) {
