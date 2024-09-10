@@ -510,6 +510,7 @@
             poiTitle.textContent = 'New POI';
             poiActions.classList.add('hidden');
             poiTags.innerHTML = `<p>Coordinates: ${lat}, ${lng}</p>`;
+            window.currentPOITagsString = '';
         }
 
 
@@ -671,6 +672,13 @@
             }
 
             tagsContainer.appendChild(tagsTable);
+            // Add tags to global variable
+            const tagsString = Object.entries(poi.tags)
+                .map(([key, value]) => `${key}=${value}`)
+                .join('\n');
+
+            // Add current POI tags to a global variable for later use
+            window.currentPOITagsString = tagsString;
         }
 
         function copyPOITags(tags) {
@@ -826,7 +834,7 @@
 
             try {
                 const result = await model.generateContent({
-                    contents: [{ role: "user", parts: [{ text: generateTagsPrompt }, ...imageParts] }],
+                    contents: [{ role: "user", parts: [{ text: generateTagsPrompt(window.currentPOITagsString) }, ...imageParts] }],
                     generationConfig: generationConfig,
                 });
 

@@ -1,4 +1,5 @@
-export const generateTagsPrompt = `
+export const generateTagsPrompt = (existingTags = null) => {
+  let prompt = `
 You are an expert mapper for Open Street Maps. You follow all OSM conventions and best practices. Analyze this image and generate valid OpenStreetMap (OSM) tags for the organization.
 
 # Focus On:
@@ -8,7 +9,7 @@ You are an expert mapper for Open Street Maps. You follow all OSM conventions an
 
 # Guidelines
 - Only add tags that are already used by the OSM community.
-- Provide reasoning for your chosen tags.
+- Provide reasoning for ALL of the chosen tags.
 - Only add tags in languages visible in the image.
 - Combine all values for the same key into a single tag separated by semicolons.
 - For shop= use only the most specific shop type.
@@ -27,3 +28,17 @@ contact:instagram=https://www.instagram.com/examplecafe
 
 The image may not contain all the necessary information. Assume the image was taken from the street level.
 `;
+
+  if (existingTags) {
+    prompt += `
+
+# Existing Tags
+The following tags already exist for this location. Please update them based on the new image data:
+${existingTags}
+
+When updating, keep any existing tags that are still valid and add new tags based on the image. If any existing tags are no longer valid, remove them and explain why.
+`;
+  }
+  console.log("prompt", prompt);
+  return prompt;
+};
