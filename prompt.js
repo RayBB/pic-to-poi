@@ -23,7 +23,10 @@ amenity=cafe
 addr:street=Main Street
 addr:housenumber=123
 opening_hours=Mo-Fr 08:00-18:00; Sa 10:00-16:00
-contact:instagram=https://www.instagram.com/examplecafe
+contact:instagram=https://instagram.com/cafe
+phone=+44 20 8452 7891
+website=https://cafe.com
+
 
 
 The image may not contain all the necessary information. Assume the image was taken from the street level.
