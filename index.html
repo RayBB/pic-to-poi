@@ -136,6 +136,15 @@
                             <tbody></tbody>
                         </table>
                     </div>
+
+                    <!-- New section for submitting changes -->
+                    <div id="submit-changes" class="mt-4">
+                        <h3 class="text-xl font-semibold mb-2">Submit Changes</h3>
+                        <button id="submit-poi-button"
+                            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                            Submit Changes
+                        </button>
+                    </div>
                 </div>
                 <div id="exif-data" class="collapsible-section hidden">
                     <h2 class="text-2xl font-semibold mb-4 cursor-pointer flex items-center"
@@ -978,6 +987,53 @@
                 showToast('Error logging out', 'error');
             });
         }
+
+
+        async function uploadChangeset(changesetData, comment) {
+            const changeset = await OSM.uploadChangeset(
+                {
+                    created_by: "pic-to-poi",
+                    comment: comment,
+                },
+                changesetData
+            );
+            console.log(changeset);
+            return changeset;
+        }
+
+        async function uploadNewNode(tags, lat, lon) {
+            const newNode = {
+                type: "node",
+                lat: lat,
+                lon: lon,
+                tags: tags,
+                id: -1, // Negative ID for new nodes
+                changeset: -1,
+                timestamp: '',
+                uid: -1,
+                user: '',
+                version: 0,
+            };
+            return uploadChangeset({
+                create: [newNode],
+                modify: [],
+                delete: [],
+            }, "creating a new node");
+        }
+
+        async function updateExistingFeature(type, id, tags) {
+            const featureResponse = await OSM.getFeature(type, id);
+            if (featureResponse.length > 0) {
+                const feature = featureResponse[0];
+                feature.tags = tags;
+                return uploadChangeset({
+                    create: [],
+                    modify: [feature],
+                    delete: [],
+                }, "updating a feature");
+            }
+        }
+
 
         // Add event listeners for login and logout buttons
         document.getElementById('login-button').addEventListener('click', handleLogin);
