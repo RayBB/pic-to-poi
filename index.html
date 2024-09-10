@@ -901,11 +901,11 @@
 
                 try {
                     const keyUsage = await getKeyUsage(key);
-                    keyUsageCell.textContent = keyUsage.toLocaleString();
+                    keyUsageCell.textContent = formatNumber(keyUsage);
 
                     if (value) {
                         const tagUsage = await getTagUsage(key, value);
-                        valueUsageCell.textContent = tagUsage.toLocaleString();
+                        valueUsageCell.textContent = formatNumber(tagUsage);
                     } else {
                         valueUsageCell.textContent = 'N/A';
                     }
@@ -914,6 +914,16 @@
                     keyUsageCell.textContent = 'Error';
                     valueUsageCell.textContent = 'Error';
                 }
+            }
+        }
+
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'm';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'k';
+            } else {
+                return num.toString();
             }
         }
 
