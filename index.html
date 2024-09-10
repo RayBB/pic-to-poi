@@ -117,10 +117,6 @@
                             class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                             Calculate Tags
                         </button>
-                        <button id="copy-tags"
-                            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                            Copy Tags
-                        </button>
                     </div>
                     <textarea id="tags-textarea"
                         class="w-full h-40 p-2 border rounded resize-none font-mono mb-4"></textarea>
@@ -337,7 +333,8 @@
                 exifTable.appendChild(row);
             }
 
-            exifContainer.classList.remove('hidden');
+            // Keep it hidden for now to simplify the UI
+            // exifContainer.classList.remove('hidden');
         }
 
         function createTableRow(key, value) {
@@ -725,10 +722,8 @@
 
         const calculateTagsButton = document.getElementById('calculate-tags');
         const tagsTextarea = document.getElementById('tags-textarea');
-        const copyTagsButton = document.getElementById('copy-tags');
 
         calculateTagsButton.addEventListener('click', calculateTags);
-        copyTagsButton.addEventListener('click', copyTags);
 
         async function calculateTags() {
             if (!GEMINI_API_KEY) {
@@ -862,15 +857,6 @@
         function displayReasoning(reasoning) {
             const reasoningElement = document.getElementById('reasoning');
             reasoningElement.textContent = reasoning;
-        }
-
-        function copyTags() {
-            navigator.clipboard.writeText(tagsTextarea.value)
-                .then(() => showToast('Tags copied to clipboard!'))
-                .catch(err => {
-                    console.error('Failed to copy tags: ', err);
-                    showToast('Failed to copy tags', 'error');
-                });
         }
 
         // Call displayMap on page load to show the initial map
