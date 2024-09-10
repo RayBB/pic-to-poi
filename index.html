@@ -53,6 +53,10 @@
             border-collapse: separate;
             border-spacing: 0 0.25rem; /* Adds a small gap between rows */
         }
+        .maplibregl-user-location-accuracy-circle{
+            /* This is needed so accuracy circle doesn't interfere with marker clicks */
+            pointer-events: none;
+        }
     </style>
     <script type="importmap">
     {
@@ -79,15 +83,6 @@
                 <div id="map-container" class="mb-8">
                     <h2 class="text-2xl font-semibold mb-4">Image Location:</h2>
                     <div id="map" class="h-64 rounded-lg relative">
-                        <button id="locate-me" class="absolute top-2 right-2 bg-white p-2 rounded-md shadow-md z-10">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                        </button>
                         <button id="add-center-icon"
                             class="absolute top-2 right-12 bg-white p-2 rounded-md shadow-md z-10">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
@@ -424,9 +419,20 @@
                     center: center,
                     zoom: 18
                 });
+                // Only show on desktop for now
+                if (window.innerWidth > 768) {
+                    map.addControl(new maplibregl.NavigationControl());
+                }
+                map.addControl(
+                    new maplibregl.GeolocateControl({
+                        positionOptions: {
+                            enableHighAccuracy: true
+                        },
+                        trackUserLocation: true,
+                        // showAccuracyCircle: false
+                    })
+                );
 
-                // Add locate me button functionality
-                document.getElementById('locate-me').addEventListener('click', moveToUserLocation);
 
                 // Add center icon button functionality
                 document.getElementById('add-center-icon').addEventListener('click', addCenterIcon);
@@ -464,33 +470,6 @@
             setTimeout(() => {
                 map.resize();
             }, 0);
-        }
-
-        async function moveToUserLocation() {
-            try {
-                const userLocation = await getUserLocation();
-                map.flyTo({ center: userLocation, zoom: 18 });
-
-                // Remove existing user location marker if it exists
-                if (userLocationMarker) {
-                    userLocationMarker.remove();
-                }
-
-                // Add new user location marker
-                userLocationMarker = new maplibregl.Marker({ color: '#3FB1CE' })
-                    .setLngLat(userLocation)
-                    .addTo(map);
-
-                // Fetch and display POIs for the new location
-                const pois = await fetchPOIs(userLocation[1], userLocation[0]);
-                displayPOIs(pois);
-
-                // Save the user location
-                saveLastLocation(userLocation);
-            } catch (error) {
-                console.error("Error getting user location:", error);
-                showToast("Unable to get your location. Please check your browser settings.", "error");
-            }
         }
 
         function addCenterIcon() {
