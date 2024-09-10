@@ -75,7 +75,8 @@
             <!-- New section for selected/new POI -->
             <div id="selected-poi" class="mb-8 hidden">
                 <h2 id="poi-title" class="text-2xl font-semibold mb-4">Selected POI:</h2>
-                <div id="poi-actions" class="flex gap-2 mb-4">
+                <div id="poi-actions" class="flex gap-2 mb-4 hidden">
+                    <!-- Hiding these buttons for now to simplify the UI -->
                     <a id="edit-poi-link" href="#" target="_blank"
                         class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                         Edit in iD
@@ -508,15 +509,7 @@
             selectedPOI.classList.remove('hidden');
             poiTitle.textContent = 'New POI';
             poiActions.classList.add('hidden');
-            poiTags.innerHTML = `
-                <p>Coordinates: ${lat}, ${lng}</p>
-                <button id="upload-new-poi" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-2">
-                    Upload New POI
-                </button>
-            `;
-
-            // Add event listener for the new upload button
-            document.getElementById('upload-new-poi').addEventListener('click', () => uploadNewPOI(lat, lng));
+            poiTags.innerHTML = `<p>Coordinates: ${lat}, ${lng}</p>`;
         }
 
 
@@ -653,7 +646,8 @@
 
             selectedPOI.classList.remove('hidden');
             poiTitle.textContent = 'Selected POI';
-            poiActions.classList.remove('hidden');
+            // leaving hidden for now
+            // poiActions.classList.remove('hidden');
             tagsContainer.innerHTML = '';
 
             // Update edit link
