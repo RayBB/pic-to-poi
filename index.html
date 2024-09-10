@@ -813,7 +813,8 @@
             };
 
             try {
-                const tagsString = Object.entries(window.currentPOIObject.tags)
+                
+                const tagsString = Object.entries(window.currentPOIObject?.tags || {})
                 .map(([key, value]) => `${key}=${value}`)
                 .join('\n');
 
