@@ -990,17 +990,18 @@
         async function uploadChangeset(changesetData, comment) {
             console.log("uploadChangeset", changesetData, comment);
             alert("change would have been made but we are in testing mode!")
-            // TODO: for now lets not upload to OSM
+            //TODO: for now lets not upload to OSM
 
-            // const changeset = await OSM.uploadChangeset(
-            //     {
-            //         created_by: "pic-to-poi",
-            //         comment: comment,
-            //     },
-            //     changesetData
-            // );
-            // console.log(changeset);
-            // return changeset;
+            const changeset = await OSM.uploadChangeset(
+                {
+                    created_by: "pic-to-poi",
+                    comment: comment,
+                },
+                changesetData
+            );
+            console.log(changeset);
+            alert("successfully sent!")
+            return changeset;
         }
 
         async function uploadNewNode(tags, lat, lon) {
