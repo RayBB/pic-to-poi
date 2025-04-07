@@ -749,7 +749,7 @@
             calculateTagsButton.disabled = true;
 
             // NOTE Gemini 1.5 Flash DOES support images!
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro-exp-03-25" });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
             const imageParts = [];
 
@@ -989,6 +989,8 @@
 
         async function uploadChangeset(changesetData, comment) {
             console.log("uploadChangeset", changesetData, comment);
+            alert("change would have been made but we are in testing mode!")
+            //TODO: for now lets not upload to OSM
 
             const changeset = await OSM.uploadChangeset(
                 {
