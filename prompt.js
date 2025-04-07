@@ -15,7 +15,8 @@ You are an expert mapper for Open Street Maps. You follow all OSM conventions an
 - For shop= use only the most specific shop type.
 - If you are unsure about a tag value, provide your best guess and add a comment explaining your reasoning.
 - Provide tags in the format below.
-
+- Keep the order of tags the same
+- Keep the check_date field the same
 
 # Example
 name=Example Cafe
